@@ -1,0 +1,137 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Predictions – Admin{% endblock %}
+{% block content %}
+<h2 style="font-family:'Rajdhani';font-size:1.6rem;font-weight:700;margin-bottom:4px">🔮 Match Predictions & Score Setter</h2>
+<p style="color:#888;font-size:.85rem;margin-bottom:16px">
+  Odds-based predictions for upcoming matches. Use <strong>Set Score</strong> to lock in the correct score — the engine will deliver it.
+</p>
+
+<div class="adm-card">
+<div style="overflow-x:auto">
+<table>
+  <thead>
+    <tr>
+      <th>Match</th>
+      <th>League / MD</th>
+      <th>Kickoff</th>
+      <th>H%</th>
+      <th>D%</th>
+      <th>A%</th>
+      <th>AI Score Tip</th>
+      <th>Over 2.5</th>
+      <th>BTTS</th>
+      <th style="color:#a8ff00">Preset Score</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for p in predictions %}
+  {% set m = p.match %}
+  <tr>
+    <td style="font-weight:800">
+      {{ m['home_code'] }} <span style="color:#aaa">vs</span> {{ m['away_code'] }}
+      <div style="color:#888;font-size:.73rem">{{ m['home_team'] }} vs {{ m['away_team'] }}</div>
+    </td>
+    <td style="font-size:.78rem;color:#888">
+      {% if m['league']=='english' %}🏴󠁧󠁢󠁥󠁮󠁧󠁿
+      {% elif m['league']=='spanish' %}🇪🇸
+      {% else %}🇮🇹{% endif %}
+      MD{{ m['matchday_number']|zfill(2) }}
+    </td>
+    <td style="color:#888;font-size:.82rem">{{ m['kickoff_time'][11:16] if m['kickoff_time'] else '—' }}</td>
+    <td>
+      <span style="background:#e8f5e9;color:#2d6a00;padding:2px 7px;border-radius:4px;font-weight:700;font-size:.8rem">{{ p.ph }}%</span>
+    </td>
+    <td>
+      <span style="background:#f5f5f5;color:#666;padding:2px 7px;border-radius:4px;font-weight:600;font-size:.8rem">{{ p.pd }}%</span>
+    </td>
+    <td>
+      <span style="background:#ffebee;color:#c62828;padding:2px 7px;border-radius:4px;font-weight:700;font-size:.8rem">{{ p.pa }}%</span>
+    </td>
+    <td style="font-weight:900;font-size:1rem">{{ p.likely_score }}
+      <span style="color:#aaa;font-size:.75rem">({{ p.cs_odds }}x)</span>
+    </td>
+    <td style="font-weight:700">{{ p.over25 }}</td>
+    <td style="font-weight:700">{{ p.btts }}</td>
+    <td>
+      {% if p.preset %}
+        <span style="background:#a8ff00;color:#111;font-weight:800;padding:3px 10px;border-radius:4px">{{ p.preset_score }}</span>
+      {% else %}
+        <span style="color:#aaa;font-size:.82rem">Not set</span>
+      {% endif %}
+    </td>
+    <td>
+      <button class="btn btn-green"
+        onclick="openScoreModal({{ m['id'] }},'{{ m['home_code'] }}','{{ m['away_code'] }}',
+          {{ m['preset_home'] if m['preset_home'] is not none else 1 }},
+          {{ m['preset_away'] if m['preset_away'] is not none else 0 }})">
+        🎯 Set
+      </button>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="11" style="text-align:center;color:#aaa;padding:24px">No upcoming matches</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+
+<!-- Score setter modal (reused from matches page) -->
+<div class="modal-overlay" id="score-modal">
+  <div class="modal">
+    <h4 id="score-modal-title">Set Correct Score</h4>
+    <p style="color:#888;font-size:.82rem;margin-bottom:14px">
+      The engine will make the match end at this exact score.
+      Goals will be distributed realistically across 90 minutes.
+    </p>
+    <form method="POST" id="score-form">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+        <div style="flex:1">
+          <label style="font-size:.78rem;color:#888;display:block;margin-bottom:4px" id="home-label">Home</label>
+          <input type="number" name="home" class="modal-input" min="0" max="9" value="1"
+                 style="text-align:center;font-size:1.5rem;font-weight:800">
+        </div>
+        <div style="font-size:1.5rem;font-weight:900;color:#aaa;padding-top:20px">–</div>
+        <div style="flex:1">
+          <label style="font-size:.78rem;color:#888;display:block;margin-bottom:4px" id="away-label">Away</label>
+          <input type="number" name="away" class="modal-input" min="0" max="9" value="0"
+                 style="text-align:center;font-size:1.5rem;font-weight:800">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px">
+        {% for score in ['0-0','1-0','0-1','1-1','2-0','0-2','2-1','1-2','2-2','3-0','0-3','3-1'] %}
+        <button type="button"
+          onclick="setQuickScore('{{ score }}')"
+          style="background:#f5f5f5;border:1px solid #e0e0e0;padding:6px;border-radius:5px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.85rem">
+          {{ score }}
+        </button>
+        {% endfor %}
+      </div>
+      <div class="modal-btns">
+        <button type="button" class="btn btn-grey" onclick="closeModal('score-modal')">Cancel</button>
+        <button type="submit" class="btn btn-green">✓ Confirm Score</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+function openScoreModal(matchId, homeCode, awayCode, ph, pa) {
+  document.getElementById('score-modal-title').textContent = `Set Score: ${homeCode} vs ${awayCode}`;
+  document.getElementById('home-label').textContent = homeCode;
+  document.getElementById('away-label').textContent = awayCode;
+  document.querySelector('#score-form [name=home]').value = ph;
+  document.querySelector('#score-form [name=away]').value = pa;
+  document.getElementById('score-form').action = `/admin/match/${matchId}/set_score`;
+  openModal('score-modal');
+}
+function setQuickScore(score) {
+  const [h,a] = score.split('-');
+  document.querySelector('#score-form [name=home]').value = h;
+  document.querySelector('#score-form [name=away]').value = a;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Logs – Admin{% endblock %}
+{% block content %}
+<h2 style="font-family:'Rajdhani';font-size:1.6rem;font-weight:700;margin-bottom:16px">📋 Activity Logs</h2>
+<div class="adm-card">
+  <table>
+    <thead><tr><th>#</th><th>Admin</th><th>Action</th><th>Details</th><th>Time</th></tr></thead>
+    <tbody>
+    {% for l in logs %}
+    <tr>
+      <td style="color:#aaa">#{{ l['id'] }}</td>
+      <td style="color:#a8ff00;font-weight:700">{{ l['username'] or 'System' }}</td>
+      <td style="font-weight:600">{{ l['action'] }}</td>
+      <td style="color:#888;font-size:.8rem">{{ l['details'] }}</td>
+      <td style="color:#aaa;font-size:.78rem">{{ l['timestamp'][:19] }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" style="text-align:center;color:#aaa;padding:24px">No logs yet</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Dashboard – Admin{% endblock %}
+{% block content %}
+<h2 style="font-family:'Rajdhani';font-size:1.6rem;font-weight:700;margin-bottom:16px">Dashboard</h2>
+
+<div class="stat-grid">
+  <div class="stat-box"><span class="stat-val">{{ stats.users }}</span><span class="stat-lbl">Users</span></div>
+  <div class="stat-box"><span class="stat-val" style="color:#ff6d00">{{ stats.pending_deposits }}</span><span class="stat-lbl">Pending Deposits</span></div>
+  <div class="stat-box"><span class="stat-val" style="color:#1565c0">{{ stats.pending_bets }}</span><span class="stat-lbl">Active Bets</span></div>
+  <div class="stat-box"><span class="stat-val">{{ stats.total_bets }}</span><span class="stat-lbl">Total Bets</span></div>
+  <div class="stat-box"><span class="stat-val">{{ stats.revenue|round(0)|int|string }}</span><span class="stat-lbl">Revenue (TZS)</span></div>
+  <div class="stat-box"><span class="stat-val" style="color:#e53935">{{ stats.live_matches }}</span><span class="stat-lbl">Live Matches</span></div>
+  <div class="stat-box"><span class="stat-val">{{ stats.total_balance|round(0)|int|string }}</span><span class="stat-lbl">User Balances</span></div>
+</div>
+
+{% if pending_deps %}
+<div class="adm-card">
+  <h3>⚡ Pending Deposits ({{ pending_deps|length }})</h3>
+  <table>
+    <thead><tr><th>#</th><th>User</th><th>Phone</th><th>Amount</th><th>Method</th><th>Time</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for t in pending_deps %}
+    <tr>
+      <td style="color:#aaa">#{{ t['id'] }}</td>
+      <td style="font-weight:700">{{ t['username'] }}</td>
+      <td style="color:#888">{{ t['phone'] }}</td>
+      <td style="font-weight:800;color:#2d6a00">{{ t['amount']|round(2) }} TZS</td>
+      <td style="color:#888;font-size:.78rem">{{ t['note'] }}</td>
+      <td style="color:#aaa;font-size:.78rem">{{ t['created_at'][:16] }}</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <form method="POST" action="/admin/transaction/{{ t['id'] }}/approve" onsubmit="return confirm('Approve this deposit?')">
+            <button class="btn btn-green">✓ Approve</button>
+          </form>
+          <form method="POST" action="/admin/transaction/{{ t['id'] }}/reject">
+            <button class="btn btn-red">✕ Reject</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="adm-card">
+  <h3>📋 Recent Admin Activity</h3>
+  <table>
+    <thead><tr><th>Admin</th><th>Action</th><th>Details</th><th>Time</th></tr></thead>
+    <tbody>
+    {% for l in recent_logs %}
+    <tr>
+      <td style="color:#a8ff00;font-weight:700">{{ l['username'] or '?' }}</td>
+      <td style="font-weight:600">{{ l['action'] }}</td>
+      <td style="color:#888;font-size:.8rem">{{ l['details'] }}</td>
+      <td style="color:#aaa;font-size:.78rem">{{ l['timestamp'][:16] }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" style="text-align:center;color:#aaa;padding:20px">No activity yet</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

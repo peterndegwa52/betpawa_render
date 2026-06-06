@@ -1,0 +1,166 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Matchdays – Admin{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+  <h2 style="font-family:'Rajdhani';font-size:1.6rem;font-weight:700">⚽ Match Management</h2>
+  <form method="POST" action="/admin/matchday/create">
+    <button class="btn btn-green">+ Create Matchday</button>
+  </form>
+</div>
+
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:.85rem;color:#856404">
+  <strong>ℹ️ How it works:</strong> Each match has its own kickoff time. Set the <strong>Correct Score</strong> before or during a match — the engine will make goals happen to reach that score by 90'. If no score is set, a random result is used.
+</div>
+
+{% for md in mds %}
+<div class="adm-card" style="margin-bottom:20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div>
+      <span style="font-family:'Rajdhani';font-size:1.1rem;font-weight:700">
+        {{ leagues.get(md['league'],{}).get('name', md['league']) }}
+        — Matchday {{ '%02d'|format(md['matchday_number']) }}
+      </span>
+      <span class="badge badge-{{ md['status'] }}" style="margin-left:8px">{{ md['status']|upper }}</span>
+    </div>
+    <span style="color:#888;font-size:.8rem">Starts: {{ md['starts_at'][:16] }}</span>
+  </div>
+
+  <!-- Matches table for this matchday -->
+  <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Match</th>
+          <th>Kickoff</th>
+          <th>Status</th>
+          <th>Live Score</th>
+          <th>HT</th>
+          <th style="color:#a8ff00">✓ Preset Score</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="matches-{{ md['id'] }}">
+        <tr><td colspan="8" style="text-align:center;color:#aaa;padding:12px">
+          <a href="#" onclick="loadMatches({{ md['id'] }}); return false"
+             style="color:#1565c0;font-weight:700">▼ Load matches</a>
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="adm-card" style="text-align:center;color:#aaa;padding:32px">
+  No matchdays yet. <strong>Create one above.</strong>
+</div>
+{% endfor %}
+
+<!-- Score setter modal -->
+<div class="modal-overlay" id="score-modal">
+  <div class="modal">
+    <h4 id="score-modal-title">Set Correct Score</h4>
+    <p style="color:#888;font-size:.82rem;margin-bottom:14px">
+      This will guide the match engine to hit this exact score by 90'.
+      You can change it at any time during the match.
+    </p>
+    <form method="POST" id="score-form">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+        <div style="flex:1">
+          <label style="font-size:.78rem;color:#888;display:block;margin-bottom:4px" id="home-label">Home</label>
+          <input type="number" name="home" class="modal-input" min="0" max="9" value="1" style="text-align:center;font-size:1.5rem;font-weight:800">
+        </div>
+        <div style="font-size:1.5rem;font-weight:900;color:#aaa;padding-top:20px">–</div>
+        <div style="flex:1">
+          <label style="font-size:.78rem;color:#888;display:block;margin-bottom:4px" id="away-label">Away</label>
+          <input type="number" name="away" class="modal-input" min="0" max="9" value="0" style="text-align:center;font-size:1.5rem;font-weight:800">
+        </div>
+      </div>
+      <div class="modal-btns">
+        <button type="button" class="btn btn-grey" onclick="closeModal('score-modal')">Cancel</button>
+        <button type="submit" class="btn btn-green">✓ Set Score</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const loadedMds = {};
+
+async function loadMatches(mdId) {
+  const tbody = document.getElementById('matches-' + mdId);
+  const r = await fetch('/admin/matchday/' + mdId + '/matches');
+  const d = await r.json();
+  loadedMds[mdId] = d.matches;
+  renderMatches(mdId, d.matches);
+}
+
+function renderMatches(mdId, matches) {
+  const tbody = document.getElementById('matches-' + mdId);
+  if (!matches.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa">No matches</td></tr>';
+    return;
+  }
+  tbody.innerHTML = matches.map(m => {
+    const statusColor = m.status==='live' ? '#e53935' : m.status==='finished' ? '#888' : '#1565c0';
+    const statusLabel = m.status==='live' ? `● ${m.current_minute}'` : m.status.toUpperCase();
+    const preset = (m.preset_home !== null && m.preset_home !== undefined)
+      ? `<span style="background:#a8ff00;color:#111;font-weight:800;padding:2px 8px;border-radius:4px">${m.preset_home}–${m.preset_away}</span>`
+      : '<span style="color:#aaa">Not set</span>';
+    const canStart = m.status === 'upcoming';
+    const canFinish = m.status === 'live';
+    const kickoff = m.kickoff_time ? m.kickoff_time.substring(11,16) : '—';
+
+    return `<tr>
+      <td style="color:#aaa;font-size:.78rem">#${m.id}</td>
+      <td style="font-weight:800">${m.home_code} <span style="color:#aaa">vs</span> ${m.away_code}
+        <div style="color:#888;font-size:.73rem">${m.home_team} vs ${m.away_team}</div>
+      </td>
+      <td style="color:#888;font-size:.82rem">${kickoff}</td>
+      <td><span style="color:${statusColor};font-weight:700;font-size:.82rem">${statusLabel}</span></td>
+      <td style="font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:900;color:#a8ff00">
+        ${m.status !== 'upcoming' ? `${m.home_score}–${m.away_score}` : '—'}
+      </td>
+      <td style="color:#888;font-size:.82rem">
+        ${m.status !== 'upcoming' ? `${m.ht_home}–${m.ht_away}` : '—'}
+      </td>
+      <td>${preset}</td>
+      <td>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="openScoreModal(${m.id},'${m.home_code}','${m.away_code}',${m.preset_home ?? 1},${m.preset_away ?? 0})">
+            🎯 Set Score
+          </button>
+          ${canStart ? `<form method="POST" action="/admin/match/${m.id}/force_start" onsubmit="return confirm('Force start this match now?')"><button class="btn btn-blue">▶ Start</button></form>` : ''}
+          ${canFinish ? `<form method="POST" action="/admin/match/${m.id}/force_finish" onsubmit="return confirm('Force finish and settle bets?')"><button class="btn btn-red">⏹ Finish</button></form>` : ''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openScoreModal(matchId, homeCode, awayCode, presetHome, presetAway) {
+  document.getElementById('score-modal-title').textContent =
+    `Set Score: ${homeCode} vs ${awayCode}`;
+  document.getElementById('home-label').textContent = homeCode;
+  document.getElementById('away-label').textContent = awayCode;
+  document.querySelector('#score-form [name=home]').value = presetHome || 1;
+  document.querySelector('#score-form [name=away]').value = presetAway || 0;
+  document.getElementById('score-form').action = `/admin/match/${matchId}/set_score`;
+  openModal('score-modal');
+}
+
+// Auto-refresh live match scores every 8s
+setInterval(async () => {
+  for (const [mdId, matches] of Object.entries(loadedMds)) {
+    const hasLive = matches.some(m => m.status === 'live');
+    if (hasLive) {
+      const r = await fetch('/admin/matchday/' + mdId + '/matches');
+      const d = await r.json();
+      loadedMds[mdId] = d.matches;
+      renderMatches(mdId, d.matches);
+    }
+  }
+}, 8000);
+</script>
+{% endblock %}

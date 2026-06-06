@@ -1,0 +1,55 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Users – Admin{% endblock %}
+{% block content %}
+<h2 style="font-family:'Rajdhani';font-size:1.6rem;font-weight:700;margin-bottom:16px">👥 User Management</h2>
+<div class="adm-card">
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>#</th><th>Username</th><th>Phone</th><th>Balance (TZS)</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for u in users %}
+    <tr>
+      <td style="color:#aaa">#{{ u['id'] }}</td>
+      <td style="font-weight:800">{{ u['username'] }}</td>
+      <td style="color:#888">{{ u['phone'] }}</td>
+      <td style="font-weight:800;color:#2d6a00">{{ u['balance']|round(2) }}</td>
+      <td>{% if u['role']=='admin' %}<span style="color:#ffd600;font-weight:700">ADMIN</span>{% else %}<span style="color:#888">user</span>{% endif %}</td>
+      <td>
+        {% if u['is_active'] %}<span class="badge badge-confirmed">Active</span>
+        {% else %}<span class="badge badge-rejected">Suspended</span>{% endif %}
+      </td>
+      <td style="color:#aaa;font-size:.78rem">{{ u['created_at'][:10] }}</td>
+      <td>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="openModal('bal-{{ u['id'] }}')">Balance</button>
+          <form method="POST" action="/admin/user/{{ u['id'] }}/toggle">
+            <button class="btn btn-grey">{{ 'Suspend' if u['is_active'] else 'Activate' }}</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    <!-- Balance Modal -->
+    <div class="modal-overlay" id="bal-{{ u['id'] }}">
+      <div class="modal">
+        <h4>Edit Balance: {{ u['username'] }}</h4>
+        <p style="color:#888;font-size:.82rem;margin-bottom:12px">Current: <strong>{{ u['balance']|round(2) }} TZS</strong></p>
+        <form method="POST" action="/admin/user/{{ u['id'] }}/balance">
+          <select name="action" class="modal-input">
+            <option value="add">➕ Add funds</option>
+            <option value="deduct">➖ Deduct funds</option>
+          </select>
+          <input type="number" name="amount" class="modal-input" placeholder="Amount in TZS" min="1" required>
+          <input type="text" name="note" class="modal-input" placeholder="Note (optional)">
+          <div class="modal-btns">
+            <button type="button" class="btn btn-grey" onclick="closeModal('bal-{{ u['id'] }}')">Cancel</button>
+            <button type="submit" class="btn btn-green">Update</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

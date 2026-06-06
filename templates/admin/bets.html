@@ -1,0 +1,55 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Bets – Admin{% endblock %}
+{% block content %}
+<h2 style="font-family:'Rajdhani';font-size:1.6rem;font-weight:700;margin-bottom:16px">🎰 Bet Management</h2>
+
+<div class="adm-card" style="padding:12px 16px">
+  <form method="GET" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <select name="status" style="padding:7px 10px;border:1.5px solid #e0e0e0;border-radius:6px;font-family:'Nunito',sans-serif">
+      <option value="">All Statuses</option>
+      <option value="pending" {% if status=='pending' %}selected{% endif %}>Pending</option>
+      <option value="won" {% if status=='won' %}selected{% endif %}>Won</option>
+      <option value="lost" {% if status=='lost' %}selected{% endif %}>Lost</option>
+    </select>
+    <button type="submit" class="btn btn-green">Filter</button>
+    <a href="/admin/bets" class="btn btn-grey">Clear</a>
+  </form>
+</div>
+
+<div class="adm-card">
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>#</th><th>User</th><th>Stake</th><th>Potential Win</th><th>Odds</th><th>Status</th><th>Placed</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for bet in bets %}
+    <tr>
+      <td style="color:#aaa">#{{ bet['id'] }}</td>
+      <td style="font-weight:700">{{ bet['username'] }}</td>
+      <td style="font-weight:700">{{ bet['total_stake']|round(2) }} TZS</td>
+      <td style="font-weight:800;color:#2d6a00">{{ bet['potential_win']|round(2) }} TZS</td>
+      <td style="color:#888">{{ (bet['potential_win']/bet['total_stake'])|round(2) }}x</td>
+      <td><span class="badge badge-{{ bet['status'] }}">{{ bet['status']|upper }}</span></td>
+      <td style="color:#aaa;font-size:.78rem">{{ bet['placed_at'][:16] }}</td>
+      <td>
+        {% if bet['status'] == 'pending' %}
+        <div id="settle-{{ bet['id'] }}" style="display:flex;gap:5px">
+          <form method="POST" action="/admin/bet/{{ bet['id'] }}/settle">
+            <input type="hidden" name="result" value="won">
+            <button class="btn btn-green" onclick="return confirm('Mark as WON?')">Won</button>
+          </form>
+          <form method="POST" action="/admin/bet/{{ bet['id'] }}/settle">
+            <input type="hidden" name="result" value="lost">
+            <button class="btn btn-red" onclick="return confirm('Mark as LOST?')">Lost</button>
+          </form>
+        </div>
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px">No bets found</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}
