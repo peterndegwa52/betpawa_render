@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Deposit – betPawa{% endblock %}
+{% block fp_account %}active{% endblock %}
+{% block content %}
+<div style="background:var(--bp-dark);padding:12px 16px;display:flex;align-items:center;gap:10px">
+  <a href="/account" style="color:white;text-decoration:none;font-size:1.1rem">‹</a>
+  <span style="color:white;font-weight:800">Deposit Funds</span>
+</div>
+
+<div style="background:rgba(168,255,0,.12);border-bottom:2px solid var(--bp-green);padding:12px 16px;font-size:.85rem;color:#2d6a00;font-weight:600">
+  💰 Current Balance: <strong>{{ user['balance']|money }} TZS</strong>
+</div>
+
+<div class="form-card">
+  <form method="POST">
+    <div class="form-group">
+      <label class="form-label">Payment Method</label>
+      <select name="method" class="form-control" style="font-family:'Nunito',sans-serif">
+        <option value="mpesa">📱 M-Pesa</option>
+        <option value="tigopesa">📱 Tigo Pesa</option>
+        <option value="airtel">📱 Airtel Money</option>
+        <option value="halopesa">📱 Halo Pesa</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number</label>
+      <input type="tel" name="phone" class="form-control" value="{{ user['phone'] or '' }}" placeholder="e.g. 0712345678">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Amount (TZS)</label>
+      <input type="number" name="amount" class="form-control" min="500" placeholder="Minimum 500 TZS" required>
+    </div>
+    <!-- Quick amounts -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      {% for amt in [1000,2000,5000,10000,20000,50000] %}
+      <button type="button" onclick="document.querySelector('[name=amount]').value={{ amt }}"
+              style="background:#f5f5f5;border:1px solid #e0e0e0;padding:6px 14px;border-radius:20px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:'Nunito',sans-serif">
+        {{ '{:,}'.format(amt) }}
+      </button>
+      {% endfor %}
+    </div>
+    <button type="submit" class="btn-primary">REQUEST DEPOSIT</button>
+    <p style="text-align:center;margin-top:12px;font-size:.78rem;color:#888">Your deposit will be processed by admin and reflected in your account</p>
+  </form>
+</div>
+{% endblock %}

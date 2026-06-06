@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Login – betPawa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Nunito',sans-serif;background:#111;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+    .logo{font-family:'Rajdhani',sans-serif;font-size:2.2rem;font-weight:700;color:white;margin-bottom:28px;letter-spacing:-.02em}
+    .logo span{color:#a8ff00}
+    .card{background:white;border-radius:12px;padding:24px;width:100%;max-width:380px}
+    .form-group{margin-bottom:14px}
+    label{display:block;font-size:.8rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+    input{width:100%;padding:11px 14px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:.95rem;font-family:'Nunito',sans-serif}
+    input:focus{outline:none;border-color:#a8ff00}
+    .btn{width:100%;background:#a8ff00;color:#111;border:none;padding:13px;border-radius:8px;font-weight:800;font-size:1rem;cursor:pointer;font-family:'Nunito',sans-serif;margin-top:4px}
+    .alert{padding:10px 14px;border-radius:8px;font-weight:600;font-size:.88rem;margin-bottom:14px}
+    .alert-danger{background:rgba(229,57,53,.1);color:#c62828;border:1px solid rgba(229,57,53,.3)}
+    .alert-success{background:rgba(168,255,0,.15);color:#2d6a00;border:1px solid rgba(168,255,0,.3)}
+    .link{color:#a8ff00;text-decoration:none;font-weight:700}
+    p{text-align:center;margin-top:16px;font-size:.88rem;color:#666}
+  </style>
+</head>
+<body>
+  <div class="logo">bet<span>Pawa</span></div>
+  <div class="card">
+    <h2 style="margin-bottom:18px;font-size:1.3rem">Login</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}<div class="alert alert-{{ cat }}">{{ msg }}</div>{% endfor %}
+    {% endwith %}
+    <form method="POST">
+      <div class="form-group">
+        <label>Phone / Username</label>
+        <input type="text" name="phone" placeholder="e.g. 0712345678" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Your password" required>
+      </div>
+      <button type="submit" class="btn">LOGIN</button>
+    </form>
+    <p>No account? <a href="/register" class="link">Join Now →</a></p>
+    <p style="margin-top:8px;color:#aaa;font-size:.78rem">Demo: demo / demo123 &nbsp;|&nbsp; Admin: admin / admin123</p>
+  </div>
+</body>
+</html>

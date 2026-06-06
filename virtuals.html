@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}Virtual Sports – betPawa{% endblock %}
+{% block nav_virtuals %}active{% endblock %}
+{% block fp_virtuals %}active{% endblock %}
+{% block content %}
+
+{% if league_filter == 'all' or true %}
+<div class="league-tabs">
+  <a href="/virtuals?league=all"
+     class="league-tab {% if league_filter=='all' %}active{% endif %}">🌐 All</a>
+  {% for k, l in leagues.items() %}
+  <a href="/virtuals?league={{ k }}"
+     class="league-tab {% if league_filter==k %}active{% endif %}">
+    {{ l['flag'] }} {{ l['name'] }}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% for lk, data in matchdays.items() %}
+{% set md   = data.info %}
+{% set matches = data.matches %}
+
+<!-- Matchday header -->
+<div class="matchday-banner">
+  <span class="md-num">
+    {{ leagues[lk]['flag'] }}
+    <strong>{{ leagues[lk]['name'] }}</strong>
+    · Matchday <strong>{{ '%02d'|format(md['matchday_number']) }}</strong>
+  </span>
+  {% if md['status'] == 'live' %}
+    <span style="color:#e53935;font-weight:800;font-size:.82rem;animation:pulse 1.5s infinite">● LIVE</span>
+  {% else %}
+    <span style="color:#ff6d00;font-size:.8rem;font-weight:700">
+      Next: <span id="next-timer-{{ lk }}" data-time="{{ md['starts_at'] }}">—</span>
+    </span>
+  {% endif %}
+</div>
+
+<!-- Match list -->
+{% for m in matches %}
+{% set odds = m['odds_json']|fromjson %}
+{% set o    = odds.get('1x2',{}) %}
+<div class="match-card {% if m['status']=='live' %}match-live{% endif %}"
+     onclick="goMatch({{ m['id'] }})">
+  <div class="match-header">
+    <div>
+      <span class="match-teams">{{ m['home_code'] }} – {{ m['away_code'] }}</span>
+      <span style="color:#aaa;font-size:.73rem;margin-left:8px">
+        {% if m['kickoff_time'] %}{{ m['kickoff_time'][11:16] }}{% endif %}
+      </span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      {% if m['status'] == 'live' %}
+        <span class="badge-live" style="font-size:.72rem">● {{ m['current_minute'] }}'</span>
+        <span style="font-family:'Rajdhani',sans-serif;font-weight:900;font-size:1.1rem;color:#e53935">
+          {{ m['home_score'] }}-{{ m['away_score'] }}
+        </span>
+      {% elif m['status'] == 'finished' %}
+        <span style="font-size:.8rem;color:#aaa">FT {{ m['home_score'] }}-{{ m['away_score'] }}</span>
+      {% else %}
+        <span id="match-timer-{{ m['id'] }}"
+              data-kickoff="{{ m['kickoff_time'] or '' }}"
+              style="font-size:.72rem;color:#ff6d00;font-weight:700">—</span>
+      {% endif %}
+      <span class="match-arrow">›</span>
+    </div>
+  </div>
+  <div class="odds-row">
+    {% for sel, label in [('1','1'), ('X','X'), ('2','2')] %}
+    <div class="odd-btn"
+         data-match-id="{{ m['id'] }}"
+         data-market="1x2"
+         data-selection="{{ sel }}"
+         onclick="event.stopPropagation();
+                  addToBetslip({{ m['id'] }},
+                    '{{ m['home_code'] }}-{{ m['away_code'] }}',
+                    '1x2','1X2',
+                    '{{ sel }}','{{ label }} {% if sel=='1' %}({{ m['home_code'] }}){% elif sel=='2' %}({{ m['away_code'] }}){% else %}(Draw){% endif %}',
+                    {{ o.get(sel, 0) }})">
+      <span class="odd-label">{{ label }}</span>
+      <span class="odd-value">{{ o.get(sel,'—') }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+{% endfor %}
+
+<style>
+.match-live { border-left: 3px solid #e53935; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
+
+<script>
+function goMatch(id) { window.location = '/match/' + id; }
+
+// Per-match individual countdown timers
+document.querySelectorAll('[data-kickoff]').forEach(el => {
+  const kickoff = el.dataset.kickoff;
+  if (!kickoff) { el.textContent = ''; return; }
+  function tick() {
+    const kt   = new Date(kickoff.replace(' ','T') + 'Z');
+    const diff = Math.max(0, Math.floor((kt - Date.now()) / 1000));
+    if (diff === 0) { el.textContent = 'Starting…'; setTimeout(() => location.reload(), 5000); return; }
+    const h = Math.floor(diff/3600);
+    const m = Math.floor((diff%3600)/60);
+    const s = diff % 60;
+    el.textContent = h > 0
+      ? `${h}h ${String(m).padStart(2,'0')}m`
+      : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    setTimeout(tick, 1000);
+  }
+  tick();
+});
+
+// Next-matchday timers
+document.querySelectorAll('[data-time]').forEach(el => {
+  function tick() {
+    const t    = new Date(el.dataset.time.replace(' ','T') + 'Z');
+    const diff = Math.max(0, Math.floor((t - Date.now()) / 1000));
+    if (diff === 0) { el.textContent = 'Starting…'; setTimeout(() => location.reload(), 5000); return; }
+    const m = Math.floor(diff/60), s = diff%60;
+    el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    setTimeout(tick, 1000);
+  }
+  tick();
+});
+
+// Refresh live scores every 15s without full reload
+setInterval(async () => {
+  const liveCards = document.querySelectorAll('.match-live');
+  if (!liveCards.length) return;
+  // Just reload the page for simplicity — polls are on match detail page
+  location.reload();
+}, 15000);
+</script>
+{% endblock %}

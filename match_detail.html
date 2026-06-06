@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% block title %}{{ match['home_code'] }} vs {{ match['away_code'] }} – betPawa{% endblock %}
+{% block nav_virtuals %}active{% endblock %}
+{% block content %}
+{% set odds = match['odds_json']|fromjson %}
+
+<!-- Back bar -->
+<div style="background:var(--bp-dark);padding:10px 14px;display:flex;align-items:center;gap:10px;">
+  <a href="/virtuals" style="color:white;font-size:1.1rem;text-decoration:none">‹</a>
+  <span style="color:#aaa;font-size:.82rem;font-weight:600">Matchday <strong style="color:white">{{ '%02d'|format(md['matchday_number']) }}</strong></span>
+  <span style="color:var(--bp-orange);font-weight:700;font-size:.82rem" id="det-timer">
+    {% if md['status'] == 'live' %}● LIVE{% elif md['status'] == 'upcoming' %}—{% else %}FT{% endif %}
+  </span>
+</div>
+
+<!-- Hero Scoreboard -->
+<div class="match-hero">
+  {% if match['status'] == 'live' %}
+  <div class="hero-minute" id="det-status">● {{ match['current_minute'] }}'</div>
+  {% elif match['status'] == 'finished' %}
+  <div class="hero-minute" style="color:#aaa">FULL TIME</div>
+  {% else %}
+  <div class="hero-minute">UPCOMING</div>
+  {% endif %}
+  <div class="match-hero-teams" style="margin:12px 0">
+    <div class="hero-team home">
+      <div style="font-size:1.5rem;margin-bottom:4px">{{ match['home_code'] }}</div>
+      <div style="font-size:.8rem;color:#aaa;font-weight:400">{{ match['home_team'] }}</div>
+      <!-- Form boxes matching BetPawa style -->
+      <div style="display:flex;gap:3px;justify-content:flex-end;margin-top:6px">
+        {% for c in ['#4caf50','#9e9e9e','#e53935','#4caf50','#9e9e9e'] %}
+        <div style="width:14px;height:14px;background:{{ c }};border-radius:2px"></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div style="text-align:center;min-width:80px">
+      {% if match['status'] != 'upcoming' %}
+        <div class="hero-score" id="det-score">{{ match['home_score'] }} – {{ match['away_score'] }}</div>
+        {% if match['status'] == 'live' %}
+        <div style="color:#aaa;font-size:.75rem;margin-top:2px">HT: {{ match['ht_home'] }}-{{ match['ht_away'] }}</div>
+        {% endif %}
+      {% else %}
+        <div class="hero-vs">VS</div>
+      {% endif %}
+    </div>
+    <div class="hero-team away">
+      <div style="font-size:1.5rem;margin-bottom:4px">{{ match['away_code'] }}</div>
+      <div style="font-size:.8rem;color:#aaa;font-weight:400">{{ match['away_team'] }}</div>
+      <div style="display:flex;gap:3px;margin-top:6px">
+        {% for c in ['#e53935','#e53935','#9e9e9e','#e53935','#4caf50'] %}
+        <div style="width:14px;height:14px;background:{{ c }};border-radius:2px"></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Events ticker (live only) -->
+{% if match['status'] == 'live' %}
+<div style="background:#111;padding:6px 14px;overflow-x:auto;white-space:nowrap;font-size:.78rem;color:#ccc" id="events-ticker">
+  {% for e in events %}
+  <span style="margin-right:16px">
+    {{ e['minute'] }}' 
+    {% if e['event_type']=='goal' %}⚽{% elif e['event_type']=='yellow_card' %}🟨{% elif e['event_type']=='red_card' %}🟥{% else %}🚩{% endif %}
+    {{ e['description'] }}
+  </span>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ── 1X2 ── -->
+<div class="market-card">
+  <div class="market-header" onclick="toggleMarket('m-1x2')">
+    <span class="market-title">1X2 | Full Time <span style="color:#888;font-size:.8rem">ⓘ</span></span>
+    <span class="market-toggle open" id="toggle-m-1x2">▲</span>
+  </div>
+  <div class="market-body" id="m-1x2">
+    {% set o = odds.get('1x2',{}) %}
+    <div class="odds-row">
+      <div class="odd-btn" data-match-id="{{ match['id'] }}" data-market="1x2" data-selection="1"
+           onclick="addToBetslip({{ match['id'] }}, '{{ match['home_code'] }}-{{ match['away_code'] }}', '1x2','1X2','1','1 ({{ match['home_code'] }})',{{ o.get('1',0) }})">
+        <span class="odd-label">1</span><span class="odd-value">{{ o.get('1','—') }}</span>
+      </div>
+      <div class="odd-btn" data-match-id="{{ match['id'] }}" data-market="1x2" data-selection="X"
+           onclick="addToBetslip({{ match['id'] }}, '{{ match['home_code'] }}-{{ match['away_code'] }}', '1x2','1X2','X','X (Draw)',{{ o.get('X',0) }})">
+        <span class="odd-label">X</span><span class="odd-value">{{ o.get('X','—') }}</span>
+      </div>
+      <div class="odd-btn" data-match-id="{{ match['id'] }}" data-market="1x2" data-selection="2"
+           onclick="addToBetslip({{ match['id'] }}, '{{ match['home_code'] }}-{{ match['away_code'] }}', '1x2','1X2','2','2 ({{ match['away_code'] }})',{{ o.get('2',0) }})">
+        <span class="odd-label">2</span><span class="odd-value">{{ o.get('2','—') }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Over/Under ── -->
+<div class="market-card">
+  <div class="market-header" onclick="toggleMarket('m-ou')">
+    <span class="market-title">Over/Under | Full Time <span style="color:#888;font-size:.8rem">ⓘ</span></span>
+    <span class="market-toggle open" id="toggle-m-ou">▲</span>
+  </div>
+  <div class="market-body" id="m-ou">
+    {% set ou = odds.get('ou',{}) %}
+    <div class="market-grid-2">
+      {% for key, lbl in [('over_1.5','Over 1.5'),('under_1.5','Under 1.5'),('over_2.5','Over 2.5'),('under_2.5','Under 2.5'),('over_3.5','Over 3.5'),('under_3.5','Under 3.5')] %}
+      <div class="odd-btn" data-match-id="{{ match['id'] }}" data-market="ou" data-selection="{{ key }}"
+           onclick="addToBetslip({{ match['id'] }},'{{ match['home_code'] }}-{{ match['away_code'] }}','ou','Over/Under','{{ key }}','{{ lbl }}',{{ ou.get(key,0) }})">
+        <span class="odd-label"></span>
+        <div style="display:flex;justify-content:space-between;width:100%;padding:0 4px;align-items:center">
+          <span style="font-size:.85rem;font-weight:700">{{ lbl }}</span>
+          <span class="odd-value">{{ ou.get(key,'—') }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ── BTTS ── -->
+<div class="market-card">
+  <div class="market-header" onclick="toggleMarket('m-btts')">
+    <span class="market-title">Both Teams To Score | Full Time <span style="color:#888;font-size:.8rem">ⓘ</span></span>
+    <span class="market-toggle open" id="toggle-m-btts">▲</span>
+  </div>
+  <div class="market-body" id="m-btts">
+    {% set bt = odds.get('btts',{}) %}
+    <div class="market-grid-2">
+      <div class="odd-btn" data-match-id="{{ match['id'] }}" data-market="btts" data-selection="yes"
+           onclick="addToBetslip({{ match['id'] }},'{{ match['home_code'] }}-{{ match['away_code'] }}','btts','BTTS','yes','Yes',{{ bt.get('yes',0) }})">
+        <div style="display:flex;justify-content:space-between;width:100%;padding:0 4px;align-items:center">
+          <span style="font-size:.85rem;font-weight:700">Yes</span>
+          <span class="odd-value">{{ bt.get('yes','—') }}</span>
+        </div>
+      </div>
+      <div class="odd-btn" data-match-id="{{ match['id'] }}" data-market="btts" data-selection="no"
+           onclick="addToBetslip({{ match['id'] }},'{{ match['home_code'] }}-{{ match['away_code'] }}','btts','BTTS','no','No',{{ bt.get('no',0) }})">
+        <div style="display:flex;justify-content:space-between;width:100%;padding:0 4px;align-items:center">
+          <span style="font-size:.85rem;font-weight:700">No</span>
+          <span class="odd-value">{{ bt.get('no','—') }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Double Chance ── -->
+<div class="market-card">
+  <div class="market-header" onclick="toggleMarket('m-dc')">
+    <span class="market-title">Double Chance | Full Time <span style="color:#888;font-size:.8rem">ⓘ</span></span>
+    <span class="market-toggle open" id="toggle-m-dc">▲</span>
+  </div>
+  <div class="market-body" id="m-dc">
+    {% set dc = odds.get('dc',{}) %}
+    <div class="market-grid-3">
+      {% for key in ['1X','X2','12'] %}
+      <div class="odd-btn" data-match-id="{{ match['id'] }}" data-market="dc" data-selection="{{ key }}"
+           onclick="addToBetslip({{ match['id'] }},'{{ match['home_code'] }}-{{ match['away_code'] }}','dc','Double Chance','{{ key }}','{{ key }}',{{ dc.get(key,0) }})">
+        <span class="odd-label">{{ key }}</span><span class="odd-value">{{ dc.get(key,'—') }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ── HT/FT ── -->
+<div class="market-card">
+  <div class="market-header" onclick="toggleMarket('m-htft')">
+    <span class="market-title">Half Time/Full Time <span style="color:#888;font-size:.8rem">ⓘ</span></span>
+    <span class="market-toggle" id="toggle-m-htft">▲</span>
+  </div>
+  <div class="market-body" id="m-htft" style="display:none">
+    {% set ht = odds.get('htft',{}) %}
+    <div class="market-grid-3">
+      {% for combo in ['1/1','1/X','1/2','X/1','X/X','X/2','2/1','2/X','2/2'] %}
+      <div class="odd-btn" data-match-id="{{ match['id'] }}" data-market="htft" data-selection="{{ combo }}"
+           onclick="addToBetslip({{ match['id'] }},'{{ match['home_code'] }}-{{ match['away_code'] }}','htft','HT/FT','{{ combo }}','{{ combo }}',{{ ht.get(combo,0) }})">
+        <span class="odd-label">{{ combo }}</span><span class="odd-value">{{ ht.get(combo,'—') }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Correct Score ── -->
+<div class="market-card" style="margin-bottom:12px">
+  <div class="market-header" onclick="toggleMarket('m-cs')">
+    <span class="market-title">Correct Score <span style="color:#888;font-size:.8rem">ⓘ</span></span>
+    <span class="market-toggle" id="toggle-m-cs">▲</span>
+  </div>
+  <div class="market-body" id="m-cs" style="display:none">
+    {% set cs = odds.get('cs',{}) %}
+    <div class="cs-grid">
+      {% for h in range(6) %}
+        {% for a in range(6) %}
+          {% set k = h|string + '-' + a|string %}
+          <div class="odd-btn" style="padding:6px 2px" data-match-id="{{ match['id'] }}" data-market="cs" data-selection="{{ k }}"
+               onclick="addToBetslip({{ match['id'] }},'{{ match['home_code'] }}-{{ match['away_code'] }}','cs','Correct Score','{{ k }}','{{ k }}',{{ cs.get(k,0) }})">
+            <span class="odd-label" style="font-size:.65rem">{{ k }}</span>
+            <span class="odd-value" style="font-size:.8rem">{{ cs.get(k,'—') }}</span>
+          </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleMarket(id) {
+  const body = document.getElementById(id);
+  const toggle = document.getElementById('toggle-' + id);
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  toggle.textContent = isOpen ? '▲' : '▲';
+  toggle.style.transform = isOpen ? 'rotate(180deg)' : '';
+}
+
+{% if match['status'] == 'live' %}
+// Poll for live updates
+let prevEvents = new Set({{ events|map(attribute='id')|list|tojson }});
+
+async function pollLive() {
+  try {
+    const r = await fetch('/match/{{ match['id'] }}/poll');
+    const d = await r.json();
+    document.getElementById('det-score').textContent = d.home_score + ' – ' + d.away_score;
+    document.getElementById('det-status').textContent = '● ' + d.current_minute + "'";
+    if (d.status === 'finished') {
+      document.getElementById('det-status').textContent = 'FULL TIME';
+      clearInterval(liveInt);
+    }
+    // Add new events to ticker
+    const ticker = document.getElementById('events-ticker');
+    if (ticker && d.events) {
+      d.events.forEach(e => {
+        if (!prevEvents.has(e.id)) {
+          prevEvents.add(e.id);
+          const icons = {goal:'⚽',yellow_card:'🟨',red_card:'🟥',corner:'🚩'};
+          const span = document.createElement('span');
+          span.style.marginRight = '16px';
+          span.textContent = `${e.minute}' ${icons[e.event_type]||''} ${e.description}`;
+          ticker.prepend(span);
+        }
+      });
+    }
+  } catch(e) {}
+}
+const liveInt = setInterval(pollLive, 2000);
+{% endif %}
+</script>
+{% endblock %}

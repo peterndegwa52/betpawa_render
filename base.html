@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>{% block title %}betPawa{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bp-green: #a8ff00;
+      --bp-green-dark: #8ad400;
+      --bp-black: #111111;
+      --bp-dark: #1a1a1a;
+      --bp-card: #ffffff;
+      --bp-grey: #f5f5f5;
+      --bp-border: #e8e8e8;
+      --bp-text: #222222;
+      --bp-muted: #888888;
+      --bp-red: #e53935;
+      --bp-orange: #ff6d00;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #f0f0f0;
+      color: var(--bp-text);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+    /* ── Header ── */
+    .bp-header {
+      background: var(--bp-black);
+      padding: 0 12px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .bp-logo {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.02em;
+    }
+    .bp-logo span { color: var(--bp-green); }
+    .bp-header-btns { display: flex; gap: 8px; align-items: center; }
+    .btn-login {
+      color: white;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.3);
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: .85rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-join {
+      color: var(--bp-black);
+      background: var(--bp-green);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: .85rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-balance {
+      color: var(--bp-green);
+      background: rgba(168,255,0,.12);
+      border: 1px solid rgba(168,255,0,.3);
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: .85rem;
+      text-decoration: none;
+    }
+    /* ── Top Nav ── */
+    .bp-topnav {
+      background: var(--bp-dark);
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      border-bottom: 1px solid #333;
+    }
+    .bp-topnav::-webkit-scrollbar { display: none; }
+    .bp-topnav a {
+      color: #aaa;
+      text-decoration: none;
+      padding: 10px 16px;
+      font-size: .82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .bp-topnav a.active { color: var(--bp-green); border-bottom-color: var(--bp-green); }
+    /* ── Matchday Banner ── */
+    .matchday-banner {
+      background: var(--bp-dark);
+      color: white;
+      text-align: center;
+      padding: 8px 16px;
+      font-size: .85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .matchday-banner .md-num { color: #ccc; }
+    .matchday-banner .md-num strong { color: white; }
+    .matchday-banner .md-timer { color: var(--bp-orange); font-weight: 800; font-size: .9rem; }
+    /* ── League Tabs ── */
+    .league-tabs {
+      background: #f0f0f0;
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 8px 12px;
+      gap: 8px;
+      border-bottom: 1px solid var(--bp-border);
+    }
+    .league-tabs::-webkit-scrollbar { display: none; }
+    .league-tab {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: .82rem;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      text-decoration: none;
+      background: white;
+      color: var(--bp-text);
+      border: 1px solid var(--bp-border);
+    }
+    .league-tab.active {
+      background: var(--bp-green);
+      color: var(--bp-black);
+      border-color: var(--bp-green);
+    }
+    /* ── Match Card ── */
+    .match-card {
+      background: white;
+      margin: 0 0 1px 0;
+      padding: 12px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--bp-border);
+    }
+    .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .match-teams { font-weight: 800; font-size: .92rem; color: var(--bp-text); }
+    .match-arrow { color: var(--bp-muted); font-size: 1.1rem; }
+    .odds-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .odd-btn {
+      border: 1px solid var(--bp-border);
+      border-radius: 5px;
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--bp-grey);
+    }
+    .odd-btn:hover, .odd-btn.selected {
+      background: var(--bp-green);
+      border-color: var(--bp-green);
+      color: var(--bp-black);
+    }
+    .odd-label { font-size: .7rem; color: var(--bp-muted); font-weight: 600; }
+    .odd-btn.selected .odd-label { color: rgba(0,0,0,.6); }
+    .odd-value { font-size: .92rem; font-weight: 800; color: var(--bp-text); }
+    .odd-btn.selected .odd-value { color: var(--bp-black); }
+    .odd-btn:hover .odd-label, .odd-btn:hover .odd-value { color: var(--bp-black); }
+    /* ── Section Heading ── */
+    .section-heading {
+      background: #f0f0f0;
+      padding: 8px 14px;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--bp-muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid var(--bp-border);
+    }
+    /* ── Market Card ── */
+    .market-card {
+      background: white;
+      border-bottom: 1px solid var(--bp-border);
+    }
+    .market-header {
+      padding: 12px 14px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .market-title { font-weight: 800; font-size: .9rem; }
+    .market-toggle { color: var(--bp-muted); transition: transform .2s; }
+    .market-toggle.open { transform: rotate(180deg); }
+    .market-body { padding: 0 14px 12px; }
+    .market-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .market-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .market-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+    /* ── Betslip FAB ── */
+    .betslip-fab {
+      position: fixed;
+      bottom: 72px;
+      right: 14px;
+      background: var(--bp-green);
+      color: var(--bp-black);
+      border-radius: 50px;
+      padding: 10px 18px;
+      font-weight: 800;
+      font-size: .85rem;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      z-index: 150;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,.3);
+      border: none;
+    }
+    .betslip-fab.visible { display: flex; }
+    .betslip-count {
+      background: var(--bp-black);
+      color: var(--bp-green);
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .78rem; font-weight: 800;
+    }
+    /* ── Betslip Drawer ── */
+    .betslip-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 300;
+      display: none;
+    }
+    .betslip-overlay.open { display: block; }
+    .betslip-drawer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: white;
+      border-radius: 16px 16px 0 0;
+      max-height: 85vh;
+      overflow-y: auto;
+      z-index: 301;
+      transform: translateY(100%);
+      transition: transform .3s ease;
+    }
+    .betslip-drawer.open { transform: translateY(0); }
+    .betslip-drag { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 12px auto 0; }
+    .betslip-header { padding: 14px 16px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--bp-border); }
+    .betslip-title { font-weight: 800; font-size: 1rem; }
+    .betslip-sel { padding: 10px 16px; border-bottom: 1px solid var(--bp-border); }
+    .betslip-sel-match { font-size: .8rem; color: var(--bp-muted); }
+    .betslip-sel-pick { font-weight: 700; font-size: .9rem; display: flex; justify-content: space-between; }
+    .betslip-total-odds { padding: 12px 16px; background: var(--bp-grey); display: flex; justify-content: space-between; font-weight: 700; }
+    .betslip-stake { padding: 12px 16px; }
+    .stake-input {
+      width: 100%; padding: 10px 14px; font-size: 1.1rem; font-weight: 800;
+      border: 2px solid var(--bp-border); border-radius: 8px; text-align: center;
+      font-family: 'Nunito', sans-serif;
+    }
+    .stake-input:focus { outline: none; border-color: var(--bp-green); }
+    .stake-quick { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .stake-quick button {
+      background: var(--bp-grey); border: 1px solid var(--bp-border);
+      padding: 5px 12px; border-radius: 4px; font-weight: 700; font-size: .82rem;
+      cursor: pointer; font-family: 'Nunito', sans-serif;
+    }
+    .potential-win { padding: 10px 16px; background: rgba(168,255,0,.12); }
+    .potential-win-label { font-size: .8rem; color: var(--bp-muted); }
+    .potential-win-amount { font-weight: 800; font-size: 1.2rem; color: var(--bp-black); }
+    .btn-place-bet {
+      margin: 12px 16px 20px;
+      width: calc(100% - 32px);
+      background: var(--bp-green);
+      color: var(--bp-black);
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+    }
+    /* ── Footer Nav ── */
+    .bp-footer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--bp-black);
+      display: flex; justify-content: space-around;
+      padding: 8px 0 10px;
+      border-top: 2px solid var(--bp-green);
+      z-index: 100;
+    }
+    .fp-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      color: #888; background: none; border: none; cursor: pointer;
+      font-family: 'Nunito', sans-serif; font-size: .7rem; font-weight: 700;
+      text-decoration: none; padding: 0 10px;
+    }
+    .fp-btn.active { color: var(--bp-green); }
+    .fp-btn svg { width: 22px; height: 22px; }
+    /* ── Alerts ── */
+    .alert { padding: 10px 14px; margin: 8px 12px; border-radius: 8px; font-weight: 600; font-size: .88rem; }
+    .alert-success { background: rgba(168,255,0,.2); color: #2d6a00; border: 1px solid rgba(168,255,0,.4); }
+    .alert-danger { background: rgba(229,57,53,.12); color: #c62828; border: 1px solid rgba(229,57,53,.3); }
+    .alert-info { background: rgba(33,150,243,.1); color: #1565c0; border: 1px solid rgba(33,150,243,.3); }
+    .alert-warning { background: rgba(255,152,0,.1); color: #e65100; border: 1px solid rgba(255,152,0,.3); }
+    /* ── Forms ── */
+    .form-card { background: white; margin: 12px; border-radius: 10px; padding: 16px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-weight: 700; font-size: .82rem; color: var(--bp-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+    .form-control {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--bp-border);
+      border-radius: 8px; font-size: .95rem; font-family: 'Nunito', sans-serif;
+      color: var(--bp-text);
+    }
+    .form-control:focus { outline: none; border-color: var(--bp-green); }
+    .btn-primary {
+      width: 100%; background: var(--bp-green); color: var(--bp-black); border: none;
+      padding: 13px; border-radius: 8px; font-weight: 800; font-size: 1rem;
+      cursor: pointer; font-family: 'Nunito', sans-serif;
+    }
+    /* ── Tables ── */
+    .bp-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .bp-table th { background: #f5f5f5; padding: 8px 10px; text-align: left; font-size: .75rem; text-transform: uppercase; color: var(--bp-muted); font-weight: 700; }
+    .bp-table td { padding: 10px; border-bottom: 1px solid var(--bp-border); vertical-align: middle; }
+    /* ── Status badges ── */
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: .72rem; font-weight: 700; }
+    .badge-won { background: rgba(168,255,0,.2); color: #2d6a00; }
+    .badge-lost { background: rgba(229,57,53,.12); color: #c62828; }
+    .badge-pending { background: rgba(255,152,0,.15); color: #bf360c; }
+    .badge-live { background: rgba(229,57,53,.12); color: var(--bp-red); animation: pulse 1.5s infinite; }
+    .badge-confirmed { background: rgba(168,255,0,.2); color: #2d6a00; }
+    .badge-rejected { background: rgba(229,57,53,.12); color: #c62828; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    /* ── Match Detail ── */
+    .match-hero {
+      background: linear-gradient(135deg, #0a2000 0%, #1a3a00 50%, #0a2000 100%);
+      padding: 20px 16px;
+      text-align: center;
+      position: relative;
+    }
+    .match-hero-teams { display: flex; align-items: center; justify-content: center; gap: 20px; }
+    .hero-team { font-family: 'Rajdhani', sans-serif; font-size: 1.4rem; font-weight: 700; color: white; flex: 1; }
+    .hero-team.away { text-align: left; }
+    .hero-team.home { text-align: right; }
+    .hero-vs { color: var(--bp-green); font-weight: 900; font-size: 1rem; font-family: 'Rajdhani', sans-serif; }
+    .hero-score { font-family: 'Rajdhani', sans-serif; font-size: 3rem; font-weight: 900; color: var(--bp-green); letter-spacing: .05em; }
+    .hero-minute { color: var(--bp-orange); font-weight: 700; font-size: .9rem; margin-top: 4px; }
+    /* ── Correct Score Grid ── */
+    .cs-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+  </style>
+</head>
+<body>
+<header class="bp-header">
+  <a href="/" class="bp-logo">bet<span>Pawa</span></a>
+  <div class="bp-header-btns">
+    {% if g.user %}
+      <a href="/account" class="btn-balance">{{ session.get('balance','0.00') }} TZS</a>
+    {% else %}
+      <a href="/login" class="btn-login">LOGIN</a>
+      <a href="/register" class="btn-join">JOIN NOW</a>
+    {% endif %}
+  </div>
+</header>
+
+<nav class="bp-topnav">
+  <a href="#" class="{% block nav_sports %}{% endblock %}">🏟 SPORTS</a>
+  <a href="#" style="color:#ff3d57">⚡ LIVE</a>
+  <a href="#" >🎰 CASINO</a>
+  <a href="/virtuals" class="{% block nav_virtuals %}{% endblock %}">🖥 VIRTUALS</a>
+  <a href="#" >✈️ AVIATOR</a>
+</nav>
+
+<div id="flash-area">
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div class="alert alert-{{ cat }}">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+</div>
+
+{% block content %}{% endblock %}
+
+<!-- Betslip FAB -->
+<button class="betslip-fab" id="betslip-fab" onclick="toggleBetslip()">
+  <span>BETSLIP</span>
+  <span class="betslip-count" id="bs-count">0</span>
+</button>
+
+<!-- Betslip Overlay + Drawer -->
+<div class="betslip-overlay" id="bs-overlay" onclick="toggleBetslip()"></div>
+<div class="betslip-drawer" id="bs-drawer">
+  <div class="betslip-drag"></div>
+  <div class="betslip-header">
+    <span class="betslip-title">⚽ Betslip (<span id="bs-sel-count">0</span>)</span>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button onclick="clearBetslip()" style="background:none;border:none;color:#e53935;font-weight:700;font-size:.82rem;cursor:pointer">Clear All</button>
+      <button onclick="toggleBetslip()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888">✕</button>
+    </div>
+  </div>
+  <div id="bs-selections"></div>
+  <div class="betslip-total-odds">
+    <span>Total Odds</span>
+    <span id="bs-total-odds">—</span>
+  </div>
+  <div class="betslip-stake">
+    <label class="form-label">Stake (TZS)</label>
+    <input type="number" class="stake-input" id="bs-stake" value="1000" min="100" oninput="updatePotential()">
+    <div class="stake-quick">
+      <button onclick="setStake(500)">500</button>
+      <button onclick="setStake(1000)">1K</button>
+      <button onclick="setStake(5000)">5K</button>
+      <button onclick="setStake(10000)">10K</button>
+      <button onclick="setStake(50000)">50K</button>
+    </div>
+  </div>
+  <div class="potential-win">
+    <div class="potential-win-label">Potential Win</div>
+    <div class="potential-win-amount" id="bs-potential">—</div>
+  </div>
+  <form method="POST" action="/betslip/place" id="bs-form">
+    <input type="hidden" name="stake" id="bs-stake-hidden">
+    <button type="submit" class="btn-place-bet" onclick="submitBet(event)">PLACE BET</button>
+  </form>
+</div>
+
+<footer class="bp-footer">
+  <a href="#" class="fp-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Menu</a>
+  <a href="/virtuals" class="fp-btn {% block fp_virtuals %}{% endblock %}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5S14.67 12 15.5 12s1.5.67 1.5 1.5S16.33 15 15.5 15zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 10 18.5 10s1.5.67 1.5 1.5S19.33 12 18.5 12z"/></svg>Sports</a>
+  <a href="#" class="fp-btn" onclick="toggleBetslip(); return false;"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>Betslip</a>
+  <a href="/register" class="fp-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Join Now</a>
+  <a href="/account" class="fp-btn {% block fp_account %}{% endblock %}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3 3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>Account</a>
+</footer>
+
+<script>
+let betslip = JSON.parse(localStorage.getItem('betslip') || '[]');
+
+function fmt(n) {
+  return parseFloat(n).toLocaleString('en-TZ', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function updateBetslipUI() {
+  const count = betslip.length;
+  document.getElementById('bs-count').textContent = count;
+  document.getElementById('bs-sel-count').textContent = count;
+  const fab = document.getElementById('betslip-fab');
+  fab.classList.toggle('visible', count > 0);
+
+  const container = document.getElementById('bs-selections');
+  container.innerHTML = betslip.map((s,i) => `
+    <div class="betslip-sel">
+      <div class="betslip-sel-match">${s.match_label} · ${s.market_label}</div>
+      <div class="betslip-sel-pick">
+        <span>${s.selection_label}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <strong>${s.odds}</strong>
+          <button onclick="removeSel(${i})" style="background:none;border:none;color:#e53935;font-size:1rem;cursor:pointer;line-height:1">✕</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  let totalOdds = betslip.reduce((acc, s) => acc * parseFloat(s.odds), 1);
+  document.getElementById('bs-total-odds').textContent = betslip.length ? totalOdds.toFixed(2) + 'x' : '—';
+  updatePotential();
+
+  // Highlight selected buttons
+  document.querySelectorAll('.odd-btn').forEach(btn => {
+    const mid = btn.dataset.matchId;
+    const mkt = btn.dataset.market;
+    const sel = btn.dataset.selection;
+    const found = betslip.find(b => b.match_id == mid && b.market == mkt && b.selection == sel);
+    btn.classList.toggle('selected', !!found);
+  });
+}
+
+function updatePotential() {
+  const stake = parseFloat(document.getElementById('bs-stake').value) || 0;
+  let totalOdds = betslip.reduce((acc, s) => acc * parseFloat(s.odds), 1);
+  const potential = stake * totalOdds;
+  document.getElementById('bs-potential').textContent = betslip.length && stake > 0 ? fmt(potential) + ' TZS' : '—';
+}
+
+function addToBetslip(matchId, matchLabel, market, marketLabel, selection, selectionLabel, odds) {
+  betslip = betslip.filter(b => !(b.match_id == matchId && b.market == market));
+  betslip.push({ match_id: matchId, match_label: matchLabel, market, market_label: marketLabel,
+                 selection, selection_label: selectionLabel, odds });
+  localStorage.setItem('betslip', JSON.stringify(betslip));
+  // Sync with server session
+  fetch('/betslip/add', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ match_id: matchId, match_label: matchLabel, market,
+                           market_label: marketLabel, selection, selection_label: selectionLabel, odds })
+  });
+  updateBetslipUI();
+  // Show betslip drawer briefly
+  openBetslip();
+}
+
+function removeSel(idx) {
+  const s = betslip[idx];
+  betslip.splice(idx, 1);
+  localStorage.setItem('betslip', JSON.stringify(betslip));
+  fetch('/betslip/remove', { method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({match_id: s.match_id, market: s.market}) });
+  updateBetslipUI();
+}
+
+function clearBetslip() {
+  betslip = [];
+  localStorage.setItem('betslip', '[]');
+  fetch('/betslip/clear', { method:'POST' });
+  updateBetslipUI();
+}
+
+function toggleBetslip() {
+  const drawer = document.getElementById('bs-drawer');
+  const overlay = document.getElementById('bs-overlay');
+  const isOpen = drawer.classList.contains('open');
+  drawer.classList.toggle('open', !isOpen);
+  overlay.classList.toggle('open', !isOpen);
+}
+
+function openBetslip() {
+  document.getElementById('bs-drawer').classList.add('open');
+  document.getElementById('bs-overlay').classList.add('open');
+}
+
+function setStake(v) {
+  document.getElementById('bs-stake').value = v;
+  updatePotential();
+}
+
+function submitBet(e) {
+  document.getElementById('bs-stake-hidden').value = document.getElementById('bs-stake').value;
+}
+
+// Sync localStorage betslip on page load
+document.addEventListener('DOMContentLoaded', updateBetslipUI);
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

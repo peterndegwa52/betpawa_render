@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Withdraw – betPawa{% endblock %}
+{% block fp_account %}active{% endblock %}
+{% block content %}
+<div style="background:var(--bp-dark);padding:12px 16px;display:flex;align-items:center;gap:10px">
+  <a href="/account" style="color:white;text-decoration:none;font-size:1.1rem">‹</a>
+  <span style="color:white;font-weight:800">Withdraw Funds</span>
+</div>
+<div style="background:rgba(168,255,0,.12);border-bottom:2px solid var(--bp-green);padding:12px 16px;font-size:.85rem;color:#2d6a00;font-weight:600">
+  💰 Available: <strong>{{ user['balance']|money }} TZS</strong>
+</div>
+<div class="form-card">
+  <form method="POST">
+    <div class="form-group">
+      <label class="form-label">M-Pesa Phone Number</label>
+      <input type="tel" name="phone" class="form-control" value="{{ user['phone'] or '' }}" placeholder="0712345678" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Amount (TZS)</label>
+      <input type="number" name="amount" class="form-control" min="500" max="{{ user['balance']|int }}" placeholder="Minimum 500 TZS" required>
+    </div>
+    <button type="submit" class="btn-primary">REQUEST WITHDRAWAL</button>
+  </form>
+</div>
+{% endblock %}

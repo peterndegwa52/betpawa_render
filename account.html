@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}My Account – betPawa{% endblock %}
+{% block fp_account %}active{% endblock %}
+{% block content %}
+<!-- Account Header -->
+<div style="background:var(--bp-dark);padding:16px;color:white">
+  <div style="font-size:.8rem;color:#aaa;margin-bottom:2px">Welcome back</div>
+  <div style="font-size:1.2rem;font-weight:800">{{ user['username'] }}</div>
+  <div style="font-size:.8rem;color:#aaa;margin-top:2px">{{ user['phone'] }}</div>
+</div>
+<div style="background:#111;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+  <div>
+    <div style="color:#aaa;font-size:.78rem;margin-bottom:2px">Available Balance</div>
+    <div style="color:var(--bp-green);font-size:1.5rem;font-weight:900;font-family:'Rajdhani',sans-serif">{{ user['balance']|money }} TZS</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a href="/deposit" style="background:var(--bp-green);color:#111;padding:8px 16px;border-radius:6px;font-weight:800;text-decoration:none;font-size:.88rem">Deposit</a>
+    <a href="/withdraw" style="background:rgba(255,255,255,.1);color:white;padding:8px 14px;border-radius:6px;font-weight:700;text-decoration:none;font-size:.88rem">Withdraw</a>
+  </div>
+</div>
+
+<!-- Quick Links -->
+<div style="background:white;margin-bottom:8px">
+  {% for icon, label, url in [('🎰','My Bets','/my-bets'),('💳','Deposit','/deposit'),('📤','Withdraw','/withdraw'),('📋','Transactions','/account')] %}
+  <a href="{{ url }}" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #f0f0f0;text-decoration:none;color:#222">
+    <span style="font-size:1.2rem">{{ icon }}</span>
+    <span style="font-weight:700">{{ label }}</span>
+    <span style="margin-left:auto;color:#aaa">›</span>
+  </a>
+  {% endfor %}
+  <a href="/logout" style="display:flex;align-items:center;gap:12px;padding:14px 16px;text-decoration:none;color:#e53935">
+    <span style="font-size:1.2rem">🚪</span>
+    <span style="font-weight:700">Logout</span>
+  </a>
+</div>
+
+<!-- Recent Transactions -->
+<div class="section-heading">Recent Transactions</div>
+<div style="background:white">
+  {% for t in txns %}
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f0f0f0">
+    <div>
+      <div style="font-weight:700;font-size:.88rem;text-transform:capitalize">{{ t['type'].replace('_',' ') }}</div>
+      <div style="color:#888;font-size:.78rem">{{ t['created_at'][:16] }} {% if t['reference'] %} · {{ t['reference'] }}{% endif %}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-weight:800;font-size:.92rem;color:{% if t['amount']>0 %}#2d6a00{% else %}#c62828{% endif %}">
+        {% if t['amount']>0 %}+{% endif %}{{ t['amount']|money }} TZS
+      </div>
+      <span class="badge badge-{{ t['status'] }}">{{ t['status'] }}</span>
+    </div>
+  </div>
+  {% else %}
+  <div style="padding:24px;text-align:center;color:#aaa">No transactions yet</div>
+  {% endfor %}
+</div>
+{% endblock %}
