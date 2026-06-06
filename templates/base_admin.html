@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Admin – betPawa{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Nunito',sans-serif;background:#f0f0f0;min-height:100vh;display:flex;flex-direction:column}
+    .adm-header{background:#111;padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+    .adm-logo{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:white}
+    .adm-logo span{color:#a8ff00}
+    .adm-user{color:#aaa;font-size:.82rem}
+    .adm-layout{display:flex;flex:1;min-height:calc(100vh - 52px)}
+    .adm-sidebar{width:200px;background:#1a1a1a;padding:16px 0;flex-shrink:0}
+    .adm-sidebar a{display:flex;align-items:center;gap:8px;padding:10px 16px;color:#888;text-decoration:none;font-size:.85rem;font-weight:600;transition:all .15s}
+    .adm-sidebar a:hover,.adm-sidebar a.active{color:#a8ff00;background:rgba(168,255,0,.08)}
+    .adm-sidebar .section{padding:8px 16px 4px;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#555;margin-top:8px}
+    .adm-content{flex:1;padding:20px;overflow-x:auto}
+    .adm-card{background:white;border-radius:10px;padding:16px;margin-bottom:16px}
+    .adm-card h3{font-size:1rem;font-weight:800;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f0f0f0}
+    .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+    .stat-box{background:white;border-radius:10px;padding:14px;text-align:center}
+    .stat-val{font-family:'Rajdhani',sans-serif;font-size:1.8rem;font-weight:700;color:#a8ff00;display:block}
+    .stat-lbl{font-size:.72rem;text-transform:uppercase;color:#888;font-weight:700;letter-spacing:.05em}
+    table{width:100%;border-collapse:collapse;font-size:.83rem}
+    th{background:#f5f5f5;padding:8px 10px;text-align:left;font-size:.72rem;text-transform:uppercase;color:#888;font-weight:700;white-space:nowrap}
+    td{padding:9px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+    tr:hover td{background:#fafafa}
+    .badge{display:inline-block;padding:3px 8px;border-radius:10px;font-size:.72rem;font-weight:700}
+    .badge-won,.badge-confirmed{background:rgba(168,255,0,.2);color:#2d6a00}
+    .badge-lost,.badge-rejected{background:rgba(229,57,53,.1);color:#c62828}
+    .badge-pending{background:rgba(255,152,0,.15);color:#bf360c}
+    .badge-live{background:rgba(229,57,53,.1);color:#e53935}
+    .badge-upcoming{background:rgba(33,150,243,.1);color:#1565c0}
+    .badge-finished{background:#f0f0f0;color:#666}
+    .btn{padding:6px 14px;border-radius:6px;font-weight:700;font-size:.8rem;cursor:pointer;border:none;font-family:'Nunito',sans-serif}
+    .btn-green{background:#a8ff00;color:#111}
+    .btn-red{background:#e53935;color:white}
+    .btn-grey{background:#f0f0f0;color:#333}
+    .btn-blue{background:#1565c0;color:white}
+    .alert{padding:10px 14px;border-radius:8px;font-weight:600;font-size:.85rem;margin-bottom:14px}
+    .alert-success{background:rgba(168,255,0,.15);color:#2d6a00;border:1px solid rgba(168,255,0,.3)}
+    .alert-danger{background:rgba(229,57,53,.1);color:#c62828;border:1px solid rgba(229,57,53,.2)}
+    .alert-info{background:rgba(33,150,243,.1);color:#1565c0;border:1px solid rgba(33,150,243,.2)}
+    .alert-warning{background:rgba(255,152,0,.1);color:#e65100;border:1px solid rgba(255,152,0,.2)}
+    .form-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    input,select{padding:7px 10px;border:1.5px solid #e0e0e0;border-radius:6px;font-family:'Nunito',sans-serif;font-size:.85rem}
+    input:focus,select:focus{outline:none;border-color:#a8ff00}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal{background:white;border-radius:12px;padding:20px;width:90%;max-width:400px}
+    .modal h4{margin-bottom:14px;font-size:1rem}
+    .modal-input{width:100%;padding:10px;border:1.5px solid #e0e0e0;border-radius:8px;font-family:'Nunito',sans-serif;margin-bottom:10px}
+    .modal-btns{display:flex;gap:8px;justify-content:flex-end}
+  </style>
+</head>
+<body>
+<header class="adm-header">
+  <div class="adm-logo">bet<span>Pawa</span> <span style="color:#ffd600;font-size:.9rem;font-weight:600">ADMIN</span></div>
+  <div class="adm-user">{{ session.get('username') }} · <a href="/logout" style="color:#e53935;text-decoration:none;font-size:.82rem">Logout</a></div>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div style="padding:0 20px;margin-top:12px">
+    {% for cat, msg in messages %}<div class="alert alert-{{ cat }}">{{ msg }}</div>{% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<div class="adm-layout">
+  <aside class="adm-sidebar">
+    <div class="section">Overview</div>
+    <a href="/admin" class="{% if request.path=='/admin' %}active{% endif %}">📊 Dashboard</a>
+    <div class="section">Management</div>
+    <a href="/admin/users" class="{% if '/users' in request.path %}active{% endif %}">👥 Users</a>
+    <a href="/admin/transactions" class="{% if '/transactions' in request.path %}active{% endif %}">💳 Transactions</a>
+    <a href="/admin/bets" class="{% if '/bets' in request.path %}active{% endif %}">🎰 Bets</a>
+    <a href="/admin/matches" class="{% if '/matches' in request.path %}active{% endif %}">⚽ Matchdays</a>
+    <div class="section">Tools</div>
+    <a href="/admin/predictions" class="{% if '/predictions' in request.path %}active{% endif %}">🔮 Predictions</a>
+    <a href="/admin/logs" class="{% if '/logs' in request.path %}active{% endif %}">📋 Logs</a>
+    <div class="section">Site</div>
+    <a href="/virtuals">🖥 View Site</a>
+  </aside>
+  <main class="adm-content">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<script>
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
